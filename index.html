@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ping-Optimizer — снизь задержку. Играй плавнее.</title>
+<meta name="description" content="Ping-Optimizer: измерьте реальный пинг, джиттер и потери пакетов прямо в браузере и настройте сеть для меньшей задержки в играх.">
+<meta name="theme-color" content="#05060a">
+<meta property="og:title" content="Ping-Optimizer">
+<meta property="og:description" content="Оптимизируй соединение. Снижай задержку. Играй плавнее.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f7cff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%230a0c14'/%3E%3Cpath d='M5 20 L11 20 L14 10 L18 24 L21 16 L23 20 L27 20' stroke='url(%23g)' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============ Design tokens ============ */
+:root{
+  --bg:#05060a;
+  --bg-2:#0a0c14;
+  --panel:rgba(255,255,255,.045);
+  --panel-2:rgba(255,255,255,.025);
+  --stroke:rgba(255,255,255,.09);
+  --stroke-strong:rgba(255,255,255,.16);
+  --text:#e9edf8;
+  --muted:#98a0b8;
+  --muted-2:#6b7390;
+  --blue:#4f7cff;
+  --violet:#8b5cf6;
+  --cyan:#38e1ff;
+  --green:#3ddc97;
+  --amber:#ffb454;
+  --red:#ff6b6b;
+  --grad:linear-gradient(90deg,#4f7cff,#8b5cf6);
+  --radius:20px;
+  --font-display:'Manrope',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,sans-serif;
+  --shadow-glow:0 10px 40px rgba(79,124,255,.28);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+body{
+  font-family:var(--font-body);
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+  overflow-x:clip;
+  -webkit-font-smoothing:antialiased;
+}
+/* Ambient background */
+.bg-aurora{position:fixed;inset:0;z-index:-2;overflow:hidden;background:
+  radial-gradient(60rem 40rem at 85% -10%,rgba(139,92,246,.16),transparent 60%),
+  radial-gradient(50rem 36rem at 0% 10%,rgba(79,124,255,.14),transparent 60%),
+  radial-gradient(46rem 30rem at 60% 110%,rgba(56,225,255,.08),transparent 60%),
+  var(--bg);}
+.bg-grid{position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,#000 30%,transparent 75%);}
+::selection{background:rgba(79,124,255,.4)}
+a{color:inherit;text-decoration:none}
+img{max-width:100%}
+.container{max-width:1180px;margin:0 auto;padding:0 24px}
+section{padding:96px 0;position:relative}
+h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:14px}
+.eyebrow::before{content:"";width:22px;height:1px;background:var(--grad)}
+.section-head{max-width:640px;margin-bottom:48px}
+.section-head h2{font-size:clamp(28px,4vw,42px);font-weight:700;line-height:1.15;margin-bottom:12px}
+.section-head p{color:var(--muted);font-size:16px}
+.glass{background:linear-gradient(180deg,var(--panel),var(--panel-2));
+  border:1px solid var(--stroke);border-radius:var(--radius);
+  backdrop-filter:blur(16px) saturate(140%);-webkit-backdrop-filter:blur(16px) saturate(140%);
+  box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;letter-spacing:.04em;
+  padding:6px 12px;border-radius:999px;border:1px solid var(--stroke-strong);color:var(--muted);background:rgba(255,255,255,.03)}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
+.chip.demo .dot{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+.chip.live .dot{background:var(--green);box-shadow:0 0 10px var(--green)}
+
+/* ============ Buttons ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;font-family:var(--font-body);
+  font-size:15px;font-weight:600;padding:13px 26px;border-radius:14px;border:1px solid transparent;
+  cursor:pointer;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s,border-color .25s,background .25s;
+  will-change:transform;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:var(--shadow-glow)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 50px rgba(99,102,241,.45);filter:brightness(1.08)}
+.btn-ghost{background:rgba(255,255,255,.04);border-color:var(--stroke-strong);color:var(--text)}
+.btn-ghost:hover{transform:translateY(-2px);border-color:rgba(139,92,246,.6);background:rgba(139,92,246,.1);box-shadow:0 10px 34px rgba(139,92,246,.2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* ============ Navbar ============ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:50;transition:background .3s,border-color .3s,backdrop-filter .3s}
+.nav.scrolled{background:rgba(6,8,14,.72);backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%);border-bottom:1px solid var(--stroke)}
+.nav-inner{max-width:1180px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:32px}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:800;font-size:17px;letter-spacing:-.01em;cursor:pointer}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,rgba(79,124,255,.2),rgba(139,92,246,.2));
+  border:1px solid var(--stroke-strong);display:grid;place-items:center;flex-shrink:0}
+.logo b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.nav-links{display:flex;gap:6px;margin-left:auto;align-items:center}
+.nav-links a{font-size:14px;font-weight:500;color:var(--muted);padding:8px 14px;border-radius:10px;transition:color .2s,background .2s}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-links a.active{color:var(--text);background:rgba(255,255,255,.07)}
+.nav-cta{margin-left:8px;padding:10px 20px;font-size:14px}
+.burger{display:none;margin-left:auto;width:42px;height:42px;border-radius:12px;border:1px solid var(--stroke-strong);
+  background:rgba(255,255,255,.04);cursor:pointer;position:relative}
+.burger span{position:absolute;left:11px;right:11px;height:2px;background:var(--text);border-radius:2px;transition:.3s}
+.burger span:nth-child(1){top:14px}.burger span:nth-child(2){top:20px}.burger span:nth-child(3){top:26px}
+.burger.open span:nth-child(1){top:20px;transform:rotate(45deg)}
+.burger.open span:nth-child(2){opacity:0}
+.burger.open span:nth-child(3){top:20px;transform:rotate(-45deg)}
+.mobile-menu{display:none;position:fixed;top:68px;left:16px;right:16px;z-index:49;padding:10px;
+  background:rgba(8,10,18,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--stroke);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.mobile-menu.open{display:block;animation:menuIn .25s cubic-bezier(.2,.8,.2,1)}
+@keyframes menuIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.mobile-menu a{display:block;padding:13px 16px;border-radius:12px;font-weight:500;color:var(--muted)}
+.mobile-menu a:hover{background:rgba(255,255,255,.05);color:var(--text)}
+
+/* ============ Hero ============ */
+.hero{padding:170px 0 90px;min-height:92vh;display:flex;align-items:center}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;width:100%}
+.hero h1{font-size:clamp(40px,6.2vw,76px);font-weight:800;line-height:1.02;margin:18px 0 20px}
+.hero h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-sub{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:480px;margin-bottom:34px}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+.download-note{font-size:12.5px;color:var(--muted-2);margin-bottom:34px;letter-spacing:.02em}
+.hero-meta{display:flex;gap:26px;flex-wrap:wrap}
+.hero-meta .m b{display:block;font-family:var(--font-display);font-size:20px}
+.hero-meta .m span{font-size:12.5px;color:var(--muted-2);letter-spacing:.04em;text-transform:uppercase}
+/* Monitor panel */
+.monitor{padding:22px;position:relative;overflow:hidden}
+.monitor-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.monitor-title{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.status{display:inline-flex;align-items:center;gap:9px;font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;
+  background:rgba(61,220,151,.1);border:1px solid rgba(61,220,151,.35);color:#7ef0c0}
+.status .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(61,220,151,.6);animation:pulse 2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(61,220,151,.55)}70%{box-shadow:0 0 0 9px rgba(61,220,151,0)}100%{box-shadow:0 0 0 0 rgba(61,220,151,0)}}
+#heroChart{width:100%;height:220px;display:block;border-radius:14px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.05)}
+.monitor-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.mstat{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06)}
+.mstat b{display:block;font-family:var(--font-display);font-size:17px}
+.mstat span{font-size:11px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.08em}
+.monitor-note{margin-top:12px;font-size:11.5px;color:var(--muted-2)}
+
+/* ============ Features ============ */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feature{padding:28px;transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s}
+.feature:hover{transform:translateY(-5px);border-color:rgba(79,124,255,.4);box-shadow:0 24px 70px rgba(79,124,255,.16)}
+.feature .ic{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;margin-bottom:18px;
+  background:linear-gradient(135deg,rgba(79,124,255,.16),rgba(139,92,246,.16));border:1px solid rgba(139,92,246,.3)}
+.feature .ic svg{width:22px;height:22px;stroke:url(#icGrad);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.feature h3{font-size:17px;margin-bottom:8px}
+.feature p{font-size:14px;color:var(--muted)}
+
+/* ============ Ping test ============ */
+.test-panel{padding:34px;max-width:980px;margin:0 auto}
+.test-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+.test-title h3{font-size:22px}
+.test-title p{color:var(--muted);font-size:14px;margin-top:4px}
+.test-controls{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.phase{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted);min-width:230px}
+.ring{width:34px;height:34px;border-radius:50%;position:relative;flex-shrink:0;display:none}
+.ring.on{display:block}
+.ring::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,#4f7cff,#8b5cf6,#38e1ff,transparent 70%);
+  animation:spin 1s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));
+  mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px))}
+@keyframes spin{to{transform:rotate(360deg)}}
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:8px 0 22px}
+.metric{padding:18px 16px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.06);
+  transition:border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.metric.measuring{border-color:rgba(56,225,255,.4);box-shadow:0 0 24px rgba(56,225,255,.12)}
+.metric .m-label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);margin-bottom:8px}
+.metric .m-value{font-family:var(--font-display);font-size:26px;font-weight:700;line-height:1.1;min-height:30px}
+.metric .m-value small{font-size:13px;color:var(--muted);font-weight:500;margin-left:3px}
+.metric .m-bar{height:3px;border-radius:3px;background:rgba(255,255,255,.07);margin-top:12px;overflow:hidden}
+.metric .m-bar i{display:block;height:100%;width:0%;background:var(--grad);border-radius:3px;transition:width .5s ease}
+.results{display:none}
+.results.on{display:block;animation:fadeUp .5s cubic-bezier(.2,.8,.2,1)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.grade-row{display:flex;align-items:center;gap:16px;padding:18px;border-radius:16px;margin-bottom:14px;
+  background:linear-gradient(90deg,rgba(79,124,255,.1),rgba(139,92,246,.08));border:1px solid rgba(139,92,246,.25)}
+.grade{font-family:var(--font-display);font-weight:800;font-size:26px;width:62px;height:62px;border-radius:16px;display:grid;place-items:center;
+  background:var(--grad);box-shadow:var(--shadow-glow);flex-shrink:0}
+.grade-row .t b{display:block;font-size:15px}
+.grade-row .t span{font-size:13px;color:var(--muted)}
+.rec-list{display:grid;gap:9px}
+.rec{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-size:14px}
+.rec .ri{width:20px;height:20px;flex-shrink:0;margin-top:1px}
+.rec.ok .ri{color:var(--green)}.rec.warn .ri{color:var(--amber)}
+.rec.warn{border-color:rgba(255,180,84,.25)}
+.test-foot{margin-top:18px;font-size:12px;color:var(--muted-2)}
+
+/* ============ How it works ============ */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;position:relative}
+.step{padding:30px;position:relative;transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s}
+.step:hover{transform:translateY(-5px);border-color:rgba(139,92,246,.4)}
+.step-num{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:17px;
+  background:var(--bg-2);border:1px solid transparent;background-clip:padding-box;position:relative;margin-bottom:20px}
+.step-num::before{content:"";position:absolute;inset:-1px;border-radius:50%;background:var(--grad);z-index:-1}
+.step-num i{position:absolute;inset:1px;border-radius:50%;background:var(--bg-2);font-style:normal;display:grid;place-items:center;color:var(--text)}
+.step h3{font-size:18px;margin-bottom:8px}
+.step p{font-size:14px;color:var(--muted)}
+
+/* ============ Before / After ============ */
+.ba-panel{padding:34px}
+.ba-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:26px}
+.ba-toggle{display:flex;align-items:center;gap:14px;font-size:14px;font-weight:500;color:var(--muted)}
+.switch{width:52px;height:29px;border-radius:999px;background:rgba(255,255,255,.09);border:1px solid var(--stroke-strong);
+  position:relative;cursor:pointer;transition:background .3s,border-color .3s;flex-shrink:0}
+.switch i{position:absolute;top:2.5px;left:3px;width:21px;height:21px;border-radius:50%;background:#aab;transition:.3s cubic-bezier(.2,.8,.2,1)}
+.switch.on{background:linear-gradient(90deg,rgba(79,124,255,.5),rgba(139,92,246,.5));border-color:rgba(139,92,246,.6)}
+.switch.on i{left:25px;background:#fff;box-shadow:0 0 12px rgba(139,92,246,.8)}
+.ba-grid{display:grid;grid-template-columns:300px 1fr;gap:30px;align-items:stretch}
+.ba-nums{display:flex;flex-direction:column;gap:14px}
+.ba-num{padding:20px;border-radius:16px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);flex:1}
+.ba-num .l{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);display:flex;align-items:center;gap:8px}
+.ba-num .l i{width:9px;height:9px;border-radius:3px;font-style:normal}
+.ba-num .v{font-family:var(--font-display);font-size:38px;font-weight:800;line-height:1.15;margin-top:4px}
+.ba-num .v small{font-size:15px;color:var(--muted);font-weight:500}
+.ba-num.before .l i{background:var(--red)}.ba-num.after .l i{background:var(--green)}
+.ba-num.after{border-color:rgba(61,220,151,.3)}
+#baChart{width:100%;height:100%;min-height:240px;border-radius:14px;background:rgba(0,0,0,.26);border:1px solid rgba(255,255,255,.05)}
+.ba-note{margin-top:16px;font-size:12px;color:var(--muted-2)}
+
+/* ============ Games ============ */
+.games-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.game{padding:30px;display:flex;flex-direction:column;gap:14px;transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s,box-shadow .3s;position:relative;overflow:hidden}
+.game::after{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);opacity:0;transition:opacity .3s}
+.game:hover{transform:translateY(-5px)}
+.game:hover::after{opacity:1}
+.game .g-icon{width:56px;height:56px;border-radius:15px;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:22px;border:1px solid}
+.game .g-tag{font-size:12px;color:var(--muted-2);letter-spacing:.06em;text-transform:uppercase}
+.game h3{font-size:18px}
+.game p{font-size:13.5px;color:var(--muted)}
+.games-note{margin-top:22px;font-size:12px;color:var(--muted-2);text-align:center}
+
+/* ============ FAQ ============ */
+.faq{max-width:760px;margin:0 auto;display:grid;gap:12px}
+.qa{overflow:hidden;transition:border-color .3s}
+.qa button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;background:none;border:none;
+  color:var(--text);font-family:var(--font-body);font-size:15.5px;font-weight:600;text-align:left;padding:20px 24px;cursor:pointer}
+.qa .plus{width:26px;height:26px;border-radius:50%;border:1px solid var(--stroke-strong);display:grid;place-items:center;flex-shrink:0;transition:.3s;position:relative}
+.qa .plus::before,.qa .plus::after{content:"";position:absolute;background:var(--text);border-radius:2px;transition:.3s}
+.qa .plus::before{width:10px;height:2px}
+.qa .plus::after{width:2px;height:10px}
+.qa.open .plus{background:var(--grad);border-color:transparent;transform:rotate(45deg)}
+.qa .a{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.2,.8,.2,1)}
+.qa .a p{padding:0 24px 20px;font-size:14px;color:var(--muted)}
+
+/* ============ Legal ============ */
+.legal-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.legal{padding:30px}
+.legal h3{font-size:18px;margin-bottom:14px}
+.legal .txt{max-height:180px;overflow-y:auto;font-size:13.5px;color:var(--muted);padding-right:12px}
+.legal .txt h4{font-size:13px;color:var(--text);margin:14px 0 4px;font-weight:600}
+.legal .txt p{margin-bottom:8px}
+.legal .txt::-webkit-scrollbar{width:5px}
+.legal .txt::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:3px}
+
+/* ============ Contact ============ */
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:980px;margin:0 auto}
+.contact-info{padding:34px;display:flex;flex-direction:column;gap:14px}
+.contact-info h3{font-size:20px}
+.contact-info p{font-size:14px;color:var(--muted)}
+.contact-channel{display:flex;align-items:center;gap:13px;padding:13px 16px;border-radius:13px;background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.07);font-size:14px;transition:border-color .25s,transform .25s}
+.contact-channel:hover{border-color:rgba(79,124,255,.45);transform:translateX(3px)}
+.contact-channel b{display:block;font-size:13.5px}
+.contact-channel span{font-size:12.5px;color:var(--muted-2)}
+form.contact-form{padding:34px;display:grid;gap:14px}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field label{display:block;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted-2);margin-bottom:7px}
+.field input,.field textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--stroke-strong);border-radius:12px;
+  color:var(--text);font-family:var(--font-body);font-size:14px;padding:12px 15px;transition:border-color .25s,box-shadow .25s;resize:vertical}
+.field input:focus,.field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,124,255,.18)}
+.field .err{font-size:12px;color:var(--red);margin-top:5px;display:none}
+.field.invalid input,.field.invalid textarea{border-color:rgba(255,107,107,.6)}
+.field.invalid .err{display:block}
+
+/* ============ Footer ============ */
+footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;background:rgba(255,255,255,.015)}
+.footer-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;margin-bottom:44px}
+.footer-grid p{font-size:13.5px;color:var(--muted);margin-top:12px;max-width:300px}
+.footer-grid h4{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin-bottom:16px;font-family:var(--font-body);font-weight:600}
+.footer-grid a{display:block;font-size:14px;color:var(--muted);padding:5px 0;transition:color .2s,transform .2s}
+.footer-grid a:hover{color:var(--text);transform:translateX(3px)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.06);padding-top:24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted-2)}
+
+/* ============ Toast ============ */
+.toast{position:fixed;bottom:26px;left:50%;transform:translate(-50%,16px);z-index:99;padding:13px 22px;border-radius:14px;
+  background:rgba(12,15,24,.92);border:1px solid var(--stroke-strong);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  font-size:14px;color:var(--text);opacity:0;pointer-events:none;transition:.35s cubic-bezier(.2,.8,.2,1);box-shadow:0 20px 60px rgba(0,0,0,.5);max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ============ Reveal on scroll ============ */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
+.reveal.visible{opacity:1;transform:none}
+.reveal.d1{transition-delay:.08s}.reveal.d2{transition-delay:.16s}.reveal.d3{transition-delay:.24s}.reveal.d4{transition-delay:.32s}
+
+/* ============ Responsive ============ */
+@media (max-width:1020px){
+  .features-grid,.games-grid{grid-template-columns:repeat(2,1fr)}
+  .footer-grid{grid-template-columns:1fr 1fr}
+  .hero-grid{grid-template-columns:1fr;gap:44px}
+  .hero{padding-top:140px}
+  .ba-grid{grid-template-columns:1fr}
+  .ba-nums{flex-direction:row}
+  .ba-nums .ba-num{padding:16px}
+  .ba-num .v{font-size:30px}
+}
+@media (max-width:760px){
+  section{padding:72px 0}
+  .nav-links{display:none}
+  .burger{display:block}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .metrics .metric:last-child{grid-column:1/-1}
+  .features-grid,.games-grid,.steps,.legal-cols,.contact-grid{grid-template-columns:1fr}
+  .steps{gap:12px}
+  .ba-nums{flex-direction:column}
+  .f-row{grid-template-columns:1fr}
+  .footer-grid{grid-template-columns:1fr;gap:28px}
+  .test-panel{padding:24px}
+  .monitor-stats{grid-template-columns:repeat(3,1fr)}
+  .hero{padding-top:120px;min-height:auto}
+  .phase{min-width:0}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="icGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4f7cff"/><stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4f7cff"/><stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="bg-aurora" aria-hidden="true"></div>
+<div class="bg-grid" aria-hidden="true"></div>
+
+<!-- ============ NAV ============ -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top" aria-label="Ping-Optimizer — на главную">
+      <span class="logo-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#icGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h4l3-8 4 14 3-9 2 3h4"/></svg>
+      </span>
+      <span>Ping<b>-Optimizer</b></span>
+    </a>
+    <nav class="nav-links" id="navLinks" aria-label="Основная навигация">
+      <a href="#features">Возможности</a>
+      <a href="#pingtest">Пинг-тест</a>
+      <a href="#how">Как это работает</a>
+      <a href="#games">Игры</a>
+      <a href="#faq">FAQ</a>
+      <a class="btn btn-primary nav-cta" href="#pingtest" data-start-test>Проверить пинг</a>
+    </nav>
+    <button class="burger" id="burger" aria-label="Меню" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</header>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#features">Возможности</a>
+  <a href="#pingtest">Пинг-тест</a>
+  <a href="#how">Как это работает</a>
+  <a href="#games">Игры</a>
+  <a href="#faq">FAQ</a>
+  <a href="#contact">Контакты</a>
+</div>
+
+<main id="top">
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="chip reveal visible"><span class="dot"></span> Веб-пинг-тест уже работает — без установки</span>
+      <h1 class="reveal visible d1">PING-<span class="grad">OPTIMIZER</span></h1>
+      <p class="hero-sub reveal visible d2">Оптимизируй соединение. Снижай задержку. Играй плавнее.</p>
+      <div class="hero-cta reveal visible d3">
+        <a class="btn btn-primary" href="https://github.com/Ping-Optimizer/Ping-Optimizer.github.io/releases/download/v1/Ping-Optimizer.exe" download>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
+          Скачать
+        </a>
+        <button class="btn btn-ghost" data-start-test>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2.5-7 4 14 2.5-8 1.5 3H21"/></svg>
+          Проверить пинг
+        </button>
+      </div>
+      <p class="download-note reveal visible d3">Бесплатно · Windows 10/11 · 52 КБ · версия 1.0</p>
+      <div class="hero-meta reveal visible d4">
+        <div class="m"><b id="heroPing">17<small style="font-size:13px;color:var(--muted)"> мс</small></b><span>демо-поток</span></div>
+        <div class="m"><b>5</b><span>метрик замера</span></div>
+        <div class="m"><b>100%</b><span>в браузере</span></div>
+      </div>
+    </div>
+    <div class="monitor glass reveal visible d2">
+      <div class="monitor-head">
+        <span class="monitor-title">Монитор сети</span>
+        <span class="status"><span class="pulse"></span> Соединение оптимизировано</span>
+      </div>
+      <canvas id="heroChart" width="1060" height="440" aria-label="Анимированный график пинга"></canvas>
+      <div class="monitor-stats">
+        <div class="mstat"><b id="mRoute">Edge / авто</b><span>Маршрут</span></div>
+        <div class="mstat"><b id="mJit">1.8 мс</b><span>Джиттер</span></div>
+        <div class="mstat"><b id="mLoss">0.0%</b><span>Потери</span></div>
+      </div>
+      <p class="monitor-note">Демонстрационный поток — запустите настоящий тест ниже, чтобы измерить своё соединение.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Возможности</span>
+      <h2>Создан для стабильного соединения</h2>
+      <p>Всё, на чём сосредоточен Ping-Optimizer: от чистой задержки до стабильности маршрута — с честными замерами прямо в браузере.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature glass reveal">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M13 2L4.5 13.5H11L9.5 22 19 10h-6.5L13 2z"/></svg></div>
+        <h3>Оптимизация пинга</h3>
+        <p>Находит типичные источники лишней задержки — от настроек TCP до фонового трафика — и помогает их устранить.</p>
+      </div>
+      <div class="feature glass reveal d1">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 4.4-3 7.4-7 9-4-1.6-7-4.6-7-9V7l7-4z"/><path d="M9 12l2 2 4-4.5"/></svg></div>
+        <h3>Стабильность соединения</h3>
+        <p>Анализ джиттера показывает, насколько ровный у вас маршрут до игрового сервера — метрика, которую чаще всего игнорируют.</p>
+      </div>
+      <div class="feature glass reveal d2">
+        <div class="ic"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M8 11h6M11 8v6"/></svg></div>
+        <h3>Диагностика сети</h3>
+        <p>Структурированная проверка параметров соединения с понятными рекомендациями вместо непонятных логов.</p>
+      </div>
+      <div class="feature glass reveal">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-7 4 14 2.5-8 1.5 3H21"/><circle cx="21" cy="12" r="1" fill="currentColor"/></svg></div>
+        <h3>Пинг-монитор в реальном времени</h3>
+        <p>Наблюдайте за задержкой секунда за секундой, пока меняете настройки, роутер или DNS — регрессии видно сразу.</p>
+      </div>
+      <div class="feature glass reveal d1">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 21s-6.5-5.4-6.5-10.2A6.5 6.5 0 0 1 12 4a6.5 6.5 0 0 1 6.5 6.8C18.5 15.6 12 21 12 21z"/><circle cx="12" cy="10.7" r="2.4"/></svg></div>
+        <h3>Выбор сервера</h3>
+        <p>Смотрите, в какой регион реально попадает ваш трафик, и что более близкий маршрут значит для времени отклика.</p>
+      </div>
+      <div class="feature glass reveal d2">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h9"/><circle cx="19" cy="18" r="2.2"/></svg></div>
+        <h3>Обнаружение потерь пакетов</h3>
+        <p>Потерянные пакеты превращают «нормальный» пинг в телепортацию. Тест честно их считает, а не скрывает.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PING TEST ============ -->
+<section id="pingtest">
+  <div class="container">
+    <div class="section-head reveal" style="margin-left:auto;margin-right:auto;text-align:center">
+      <span class="eyebrow" style="justify-content:center">Пинг-тест</span>
+      <h2>Измерьте своё соединение прямо сейчас</h2>
+      <p>Настоящий тест, который выполняется полностью в вашем браузере: задержка, джиттер, потери и скорость. Без регистрации и установки.</p>
+    </div>
+    <div class="test-panel glass reveal">
+      <div class="test-top">
+        <div class="test-title">
+          <h3>Тест соединения</h3>
+          <p id="testState">Готов к запуску.</p>
+        </div>
+        <div class="test-controls">
+          <span class="chip live" id="modeChip"><span class="dot"></span><span id="modeText">Живой режим · Edge Cloudflare</span></span>
+          <span class="phase" id="phaseBox"><span class="ring" id="ring"></span><span id="phaseText"></span></span>
+          <button class="btn btn-primary" id="startBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5-11-6.5z"/></svg>
+            <span id="startBtnText">Запустить тест</span>
+          </button>
+        </div>
+      </div>
+      <div class="metrics">
+        <div class="metric" id="tile-ping">
+          <div class="m-label">Пинг</div>
+          <div class="m-value" id="v-ping">—</div>
+          <div class="m-bar"><i id="b-ping"></i></div>
+        </div>
+        <div class="metric" id="tile-jitter">
+          <div class="m-label">Джиттер</div>
+          <div class="m-value" id="v-jitter">—</div>
+          <div class="m-bar"><i id="b-jitter"></i></div>
+        </div>
+        <div class="metric" id="tile-loss">
+          <div class="m-label">Потери</div>
+          <div class="m-value" id="v-loss">—</div>
+          <div class="m-bar"><i id="b-loss"></i></div>
+        </div>
+        <div class="metric" id="tile-down">
+          <div class="m-label">Загрузка</div>
+          <div class="m-value" id="v-down">—</div>
+          <div class="m-bar"><i id="b-down"></i></div>
+        </div>
+        <div class="metric" id="tile-up">
+          <div class="m-label">Отдача</div>
+          <div class="m-value" id="v-up">—</div>
+          <div class="m-bar"><i id="b-up"></i></div>
+        </div>
+      </div>
+      <div class="results" id="results">
+        <div class="grade-row">
+          <div class="grade" id="grade">A</div>
+          <div class="t">
+            <b id="gradeTitle">Отличное соединение</b>
+            <span id="gradeSub">Подходит для любой соревновательной игры.</span>
+          </div>
+        </div>
+        <div class="rec-list" id="recList"></div>
+      </div>
+      <p class="test-foot" id="testFoot">Замер по HTTPS из вашего браузера к публичным speed-эндпоинтам Cloudflare. Задержка через браузер немного выше игрового ICMP-пинга — считайте эти числа близкой оценкой.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW IT WORKS ============ -->
+<section id="how">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Как это работает</span>
+      <h2>Три шага к чистому маршруту</h2>
+      <p>Без магии и фальшивых обещаний: понять своё соединение, убрать лишнее, продолжать наблюдать.</p>
+    </div>
+    <div class="steps">
+      <div class="step glass reveal">
+        <div class="step-num"><i>1</i></div>
+        <h3>Проверьте соединение</h3>
+        <p>Запустите браузерный тест: пинг, джиттер, потери и скорость замеряются до ближайшего edge-сервера и складываются в профиль вашего соединения.</p>
+      </div>
+      <div class="step glass reveal d1">
+        <div class="step-num"><i>2</i></div>
+        <h3>Оптимизируйте настройки сети</h3>
+        <p>Ping-Optimizer проверяет типичные программные источники задержки — фоновые приложения, DNS, настройки TCP — и применяет безопасные обратимые изменения.</p>
+      </div>
+      <div class="step glass reveal d2">
+        <div class="step-num"><i>3</i></div>
+        <h3>Следите за задержкой</h3>
+        <p>Держите монитор открытым во время игры и настройки — сразу видно, помогло ли изменение на самом деле.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BEFORE / AFTER ============ -->
+<section id="beforeafter">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">До / После</span>
+      <h2>Как выглядит оптимизация</h2>
+      <p>Переключите тумблер, чтобы сравнить типичное неоптимизированное соединение с тем же маршрутом после чистки.</p>
+    </div>
+    <div class="ba-panel glass reveal">
+      <div class="ba-top">
+        <div class="ba-toggle">
+          <span>До оптимизации</span>
+          <span class="switch" id="baSwitch" role="switch" aria-checked="false" tabindex="0" aria-label="Показать вид после оптимизации"><i></i></span>
+          <span style="color:var(--text)" id="baLabel">После</span>
+        </div>
+        <span class="chip demo"><span class="dot"></span> Условный пример</span>
+      </div>
+      <div class="ba-grid">
+        <div class="ba-nums">
+          <div class="ba-num before">
+            <div class="l"><i></i> До — средний пинг</div>
+            <div class="v"><span id="baBefore">84</span><small> мс</small></div>
+          </div>
+          <div class="ba-num after">
+            <div class="l"><i></i> После — средний пинг</div>
+            <div class="v"><span id="baAfter">29</span><small> мс</small></div>
+          </div>
+        </div>
+        <canvas id="baChart" width="1200" height="480" aria-label="Сравнение пинга до и после оптимизации"></canvas>
+      </div>
+      <p class="ba-note">Смоделированная иллюстрация типичного сценария (фоновые загрузки, стоковые настройки адаптера), а не живой замер. Ваш результат зависит от провайдера и маршрута — именно для его проверки и нужен тест выше.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GAMES ============ -->
+<section id="games">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">Игры</span>
+      <h2>Заточен под ваши игры</h2>
+      <p>Задержка важна везде, но каждый жанр наказывает за своё. Ping-Optimizer следит за всеми слабыми местами.</p>
+    </div>
+    <div class="games-grid">
+      <div class="game glass reveal">
+        <div class="g-icon" style="color:#ff9a3d;border-color:rgba(255,154,61,.4);background:rgba(255,154,61,.1)">CS</div>
+        <span class="g-tag">Тактический шутер</span>
+        <h3>Counter-Strike 2</h3>
+        <p>Саб-тик неткод всё равно наказывает за джиттер. Стабильный маршрут важнее «сырого» пинга.</p>
+      </div>
+      <div class="game glass reveal d1">
+        <div class="g-icon" style="color:#ff5470;border-color:rgba(255,84,112,.4);background:rgba(255,84,112,.1)">V</div>
+        <span class="g-tag">Тактический шутер</span>
+        <h3>Valorant</h3>
+        <p>Серверы 128 tick любят низкий и ровный пинг — стабильность важнее пиковых значений.</p>
+      </div>
+      <div class="game glass reveal d2">
+        <div class="g-icon" style="color:#8b5cf6;border-color:rgba(139,92,246,.4);background:rgba(139,92,246,.1)">F</div>
+        <span class="g-tag">Battle royale</span>
+        <h3>Fortnite</h3>
+        <p>Битвы стройками усиливают каждый потерянный пакет. Тест на потери — ваш друг.</p>
+      </div>
+      <div class="game glass reveal">
+        <div class="g-icon" style="color:#ff4f4f;border-color:rgba(255,79,79,.4);background:rgba(255,79,79,.1)">A</div>
+        <span class="g-tag">Battle royale</span>
+        <h3>Apex Legends</h3>
+        <p>Динамичные перестрелки требуют стабильного канала — проверяйте и скорость загрузки тоже.</p>
+      </div>
+      <div class="game glass reveal d1">
+        <div class="g-icon" style="color:#5fbf5f;border-color:rgba(95,191,95,.4);background:rgba(95,191,95,.1)">MC</div>
+        <span class="g-tag">Песочница / PvP</span>
+        <h3>Minecraft</h3>
+        <p>Блок-трейд и PvP-киты — чистая задержка. Здесь видна каждая миллисекунда.</p>
+      </div>
+      <div class="game glass reveal d2">
+        <div class="g-icon" style="color:#f2c94c;border-color:rgba(242,201,76,.4);background:rgba(242,201,76,.1)">P</div>
+        <span class="g-tag">Battle royale</span>
+        <h3>PUBG</h3>
+        <p>Дальние бои выдают колебания маршрута. Смотрите на график джиттера, а не только на пинг.</p>
+      </div>
+    </div>
+    <p class="games-note">Все торговые марки и названия игр принадлежат их владельцам и упомянуты для идентификации. Ping-Optimizer — независимая утилита, не связана с издателями игр.</p>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq">
+  <div class="container">
+    <div class="section-head reveal" style="margin-left:auto;margin-right:auto;text-align:center">
+      <span class="eyebrow" style="justify-content:center">FAQ</span>
+      <h2>Честные ответы на частые вопросы</h2>
+    </div>
+    <div class="faq">
+      <div class="qa glass reveal">
+        <button aria-expanded="false">Что на самом деле измеряет веб-пинг-тест?<span class="plus"></span></button>
+        <div class="a"><p>Он замеряет время небольших HTTPS-запросов из вашего браузера до публичных speed-эндпоинтов Cloudflare — тот же тип обращения к ближайшему серверу, что и у игрового трафика. Поскольку это HTTP, а не чистый ICMP, число обычно на несколько миллисекунд выше игрового. Считайте его близкой, честной оценкой.</p></div>
+      </div>
+      <div class="qa glass reveal d1">
+        <button aria-expanded="false">Это работает со всеми играми?<span class="plus"></span></button>
+        <div class="a"><p>Веб-тест измеряет ваше соединение — то самое, через которое идёт любая онлайн-игра. Десктоп-утилита настраивает параметры операционной системы (TCP, DNS, фоновый трафик), и эти настройки действуют для любой игры независимо от издателя.</p></div>
+      </div>
+      <div class="qa glass reveal d2">
+        <button aria-expanded="false">Вы собираете или храните мои данные?<span class="plus"></span></button>
+        <div class="a"><p>Нет. Тест выполняется полностью в вашем браузере, результаты никуда не отправляются нам — сетевые запросы идут только к публичным speed-эндпоинтам Cloudflare, как если бы вы открыли их страницу сами. На этой странице нет аккаунтов, cookies и аналитики.</p></div>
+      </div>
+      <div class="qa glass reveal">
+        <button aria-expanded="false">Можете гарантировать снижение пинга?<span class="plus"></span></button>
+        <div class="a"><p>Нет — и стоит насторожиться, если какой-то инструмент такое обещает. Расстояние и маршрутизация провайдера задают физический предел, который софт не обойдёт. Оптимизация может убрать само-нанесённые накладки: фоновые загрузки, раздутые буферы, неудачный DNS. Раздел «До / После» показывает реалистичный сценарий такой чистки.</p></div>
+      </div>
+      <div class="qa glass reveal d1">
+        <button aria-expanded="false">Ping-Optimizer бесплатный?<span class="plus"></span></button>
+        <div class="a"><p>Да. Веб-пинг-тест на этой странице полностью бесплатен и останется таким. Десктоп-приложение для Windows тоже бесплатное — кнопка «Скачать» отдаёт актуальную версию напрямую с GitHub Releases.</p></div>
+      </div>
+      <div class="qa glass reveal d2">
+        <button aria-expanded="false">Почему тест иногда показывает «Демо-режим»?<span class="plus"></span></button>
+        <div class="a"><p>Если браузер не может достучаться до speed-эндпоинтов — нет сети, запросы блокирует файрвол или блокировщик рекламы — тест переключается на явно помеченную симуляцию вместо фальшивых «живых» чисел. Это принципиально: лучше честное демо, чем выдумка.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LEGAL ============ -->
+<section id="legal">
+  <div class="container">
+    <div class="legal-cols">
+      <div class="legal glass reveal" id="privacy">
+        <h3>Политика конфиденциальности</h3>
+        <div class="txt">
+          <h4>Что мы собираем</h4>
+          <p>Ничего. На странице нет аккаунтов, cookies, аналитики и телеметрии. Результаты тестов вычисляются в браузере и остаются в браузере.</p>
+          <h4>Сетевые запросы</h4>
+          <p>Запуск пинг-теста отправляет небольшие HTTP-запросы к публичным speed-эндпоинтам Cloudflare (speed.cloudflare.com). Как и при любом запросе в интернете, Cloudflare видит ваш IP-адрес — это регулируется его собственной политикой. Запросов к серверам Ping-Optimizer нет.</p>
+          <h4>Форма обратной связи</h4>
+          <p>Форма контактов формирует письмо в вашем собственном почтовом приложении. Мы видим только то, что вы сами решите отправить.</p>
+          <h4>Изменения</h4>
+          <p>Если политика изменится, новая версия будет опубликована на этой странице до вступления в силу.</p>
+        </div>
+      </div>
+      <div class="legal glass reveal d1" id="terms">
+        <h3>Условия использования</h3>
+        <div class="txt">
+          <h4>Предоставляется «как есть»</h4>
+          <p>Сайт и его инструменты предоставляются бесплатно, без каких-либо гарантий. Сетевые замеры являются оценками и зависят от факторов вне нашего контроля.</p>
+          <h4>Без гарантий результата</h4>
+          <p>Ping-Optimizer не обещает конкретного снижения задержки. Результат зависит от провайдера, маршрута и оборудования. Остерегайтесь утилит, гарантирующих «магическое» снижение пинга.</p>
+          <h4>Товарные знаки</h4>
+          <p>Названия игр упомянуты для идентификации и принадлежат своим владельцам. Ping-Optimizer не связан с издателями игр и не одобрен ими.</p>
+          <h4>Допустимое использование</h4>
+          <p>Страницу можно свободно использовать в личных некоммерческих целях. Пожалуйста, не пытайтесь нарушать работу сервиса или злоупотреблять публичными эндпоинтами, на которые он опирается.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section id="contact">
+  <div class="container">
+    <div class="section-head reveal" style="margin-left:auto;margin-right:auto;text-align:center">
+      <span class="eyebrow" style="justify-content:center">Контакты</span>
+      <h2>Свяжитесь с нами</h2>
+      <p>Вопросы, баг-репорты, отзывы о тесте — всё приветствуется.</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info glass reveal">
+        <h3>Каналы связи</h3>
+        <p>Предпочитаете почту? Используйте форму — она открывает ваш собственный почтовый клиент, ничего не отправляется через этот сайт.</p>
+        <div class="contact-channel">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#icGrad)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 8l9 6 9-6"/></svg>
+          <div><b>Почта</b><span id="contactEmailLabel">support@example.com</span></div>
+        </div>
+        <div class="contact-channel">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#icGrad)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M9 12l2.5 2.5L21 5"/></svg>
+          <div><b>Статус</b><span>Веб-тест: работает</span></div>
+        </div>
+        <div class="contact-channel">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="url(#icGrad)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          <div><b>Время ответа</b><span>Обычно в течение 48 часов</span></div>
+        </div>
+      </div>
+      <form class="contact-form glass reveal d1" id="contactForm" novalidate>
+        <div class="f-row">
+          <div class="field" id="f-name">
+            <label for="in-name">Имя</label>
+            <input id="in-name" type="text" autocomplete="name" placeholder="Ваше имя">
+            <div class="err">Введите имя.</div>
+          </div>
+          <div class="field" id="f-email">
+            <label for="in-email">Почта</label>
+            <input id="in-email" type="email" autocomplete="email" placeholder="you@example.com">
+            <div class="err">Введите корректную почту.</div>
+          </div>
+        </div>
+        <div class="field" id="f-msg">
+          <label for="in-msg">Сообщение</label>
+          <textarea id="in-msg" rows="4" placeholder="Расскажите о проблеме с соединением или вашей идее…"></textarea>
+          <div class="err">Напишите сообщение.</div>
+        </div>
+        <button class="btn btn-primary" type="submit" style="justify-self:start">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          Отправить
+        </button>
+      </form>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <a class="logo" href="#top">
+          <span class="logo-mark">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#icGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 14h4l3-8 4 14 3-9 2 3h4"/></svg>
+          </span>
+          <span>Ping<b>-Optimizer</b></span>
+        </a>
+        <p>Утилита для онлайн-игроков, сосредоточенная на задержке: честно измеряйте соединение, настраивайте то, что поддаётся настройке, следите за главным.</p>
+      </div>
+      <div>
+        <h4>Продукт</h4>
+        <a href="#features">Возможности</a>
+        <a href="#pingtest">Пинг-тест</a>
+        <a href="#how">Как это работает</a>
+        <a href="#games">Игры</a>
+      </div>
+      <div>
+        <h4>Ресурсы</h4>
+        <a href="#faq">FAQ</a>
+        <a href="#privacy">Политика конфиденциальности</a>
+        <a href="#terms">Условия использования</a>
+        <a href="#contact">Контакты</a>
+      </div>
+      <div>
+        <h4>Статус</h4>
+        <a href="#pingtest">Веб-тест — работает</a>
+        <a href="https://github.com/Ping-Optimizer/Ping-Optimizer.github.io/releases/download/v1/Ping-Optimizer.exe" download>Скачать для Windows · v1.0</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year">2026</span> Ping-Optimizer. Все права защищены.</span>
+      <span>Пинг-тест выполняется в вашем браузере через публичные speed-эндпоинты Cloudflare.</span>
+    </div>
+  </div>
+</footer>
+
+<div class="toast" id="toast" role="status"></div>
+
+<noscript><div style="text-align:center;padding:20px;color:#ffb454">Для интерактивного пинг-теста нужен включённый JavaScript.</div></noscript>
+
+<script>
+/* ================================================================
+   Ping-Optimizer — клиентская логика
+   ================================================================ */
+'use strict';
+
+const $  = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+
+/* Замените на реальный адрес поддержки перед публикацией */
+const CONTACT_EMAIL = 'support@example.com';
+
+const REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- Toast ---------------- */
+let toastTimer;
+function toast(msg, ms) {
+  const el = $('#toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), ms || 3200);
+}
+
+/* ---------------- Nav ---------------- */
+const nav = $('#nav');
+addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 24), { passive: true });
+
+const burger = $('#burger'), mobileMenu = $('#mobileMenu');
+burger.addEventListener('click', () => {
+  const open = mobileMenu.classList.toggle('open');
+  burger.classList.toggle('open', open);
+  burger.setAttribute('aria-expanded', open);
+});
+$$('#mobileMenu a').forEach(a => a.addEventListener('click', () => {
+  mobileMenu.classList.remove('open');
+  burger.classList.remove('open');
+}));
+
+/* Scroll spy */
+const spyLinks = $$('#navLinks a[href^="#"]:not(.nav-cta)');
+const spyTargets = spyLinks.map(a => $(a.getAttribute('href'))).filter(Boolean);
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    spyLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+  });
+}, { rootMargin: '-40% 0px -55% 0px' });
+spyTargets.forEach(t => spy.observe(t));
+
+/* ---------------- Reveal on scroll ---------------- */
+(function () {
+  const els = $$('.reveal');
+  if (!els.length) return;
+  if (REDUCED) { els.forEach(el => el.classList.add('visible')); return; }
+
+  let io = null;
+  if ('IntersectionObserver' in window) {
+    io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    els.forEach(el => io.observe(el));
+  }
+
+  /* Фолбэк по скроллу: гарантирует появление контента, даже если
+     IO-колбэки или rAF заморожены окружением. */
+  function pass() {
+    const vh = innerHeight;
+    for (const el of els) {
+      if (el.classList.contains('visible')) continue;
+      const r = el.getBoundingClientRect();
+      if (r.top < vh * 0.9 && r.bottom > 0) el.classList.add('visible');
+    }
+  }
+  addEventListener('scroll', pass, { passive: true });
+  addEventListener('resize', pass);
+  setTimeout(pass, 250);
+  setTimeout(pass, 1200);
+})();
+
+/* ---------------- Hero demo monitor ---------------- */
+(function heroMonitor() {
+  const cv = $('#heroChart');
+  if (!cv || REDUCED) return;
+  const ctx = cv.getContext('2d');
+  const N = 90;
+  let series = Array.from({ length: N }, () => 16 + Math.random() * 3.5);
+  let spike = 0, acc = 0, last = 0, jit = [], heroPing = 17;
+
+  function frame(t) {
+    requestAnimationFrame(frame);
+    if (t - last < 110) return;
+    last = t;
+    spike = Math.max(0, spike - 1);
+    if (!spike && Math.random() < 0.02) spike = 3 + (Math.random() * 4 | 0);
+    const v = 16 + Math.random() * 3.5 + (spike ? 6 + Math.random() * 9 : 0);
+    series.push(v); series.shift();
+    acc += 110;
+    jit.push(v); if (jit.length > 10) jit.shift();
+    if (acc >= 1100) {
+      acc = 0;
+      const avg = series.slice(-12).reduce((a, b) => a + b, 0) / 12;
+      heroPing = Math.round(avg);
+      $('#heroPing').innerHTML = heroPing + '<small style="font-size:13px;color:var(--muted)"> мс</small>';
+      const j = jit.slice(1).reduce((s, x, i) => s + Math.abs(x - jit[i]), 0) / (jit.length - 1);
+      $('#mJit').textContent = j.toFixed(1) + ' мс';
+      $('#mLoss').textContent = spike ? '0.4%' : '0.0%';
+      $('#mRoute').textContent = heroPing > 22 ? 'Edge / рядом' : 'Edge / авто';
+    }
+    draw();
+  }
+
+  function draw() {
+    const w = cv.width, h = cv.height, pad = 30;
+    const maxV = 55, px = i => pad + i * (w - pad * 2) / (N - 1);
+    const py = v => h - pad - (v / maxV) * (h - pad * 2);
+    ctx.clearRect(0, 0, w, h);
+    /* сетка */
+    ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 1;
+    for (let g = 0; g <= 4; g++) {
+      const y = pad + g * (h - pad * 2) / 4;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+    }
+    /* заливка */
+    const grad = ctx.createLinearGradient(0, pad, 0, h - pad);
+    grad.addColorStop(0, 'rgba(79,124,255,.28)'); grad.addColorStop(1, 'rgba(79,124,255,0)');
+    ctx.beginPath(); ctx.moveTo(px(0), py(series[0]));
+    series.forEach((v, i) => ctx.lineTo(px(i), py(v)));
+    ctx.lineTo(px(N - 1), h - pad); ctx.lineTo(px(0), h - pad); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+    /* линия */
+    ctx.beginPath(); ctx.moveTo(px(0), py(series[0]));
+    series.forEach((v, i) => ctx.lineTo(px(i), py(v)));
+    ctx.strokeStyle = 'url(#lineGrad)'; ctx.lineWidth = 3.4; ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(99,102,241,.55)'; ctx.shadowBlur = 14;
+    ctx.stroke(); ctx.shadowBlur = 0;
+    /* точка на конце */
+    const hx = px(N - 1), hy = py(series[N - 1]);
+    ctx.beginPath(); ctx.arc(hx, hy, 6, 0, 7); ctx.fillStyle = '#a855f7';
+    ctx.shadowColor = 'rgba(168,85,247,.9)'; ctx.shadowBlur = 16; ctx.fill(); ctx.shadowBlur = 0;
+  }
+  requestAnimationFrame(frame);
+})();
+
+/* ---------------- Движок пинг-теста ---------------- */
+const CF_DOWN = 'https://speed.cloudflare.com/__down?bytes=';
+const CF_UP   = 'https://speed.cloudflare.com/__up';
+
+const tiles = { ping: $('#tile-ping'), jitter: $('#tile-jitter'), loss: $('#tile-loss'), down: $('#tile-down'), up: $('#tile-up') };
+const vals  = { ping: $('#v-ping'),  jitter: $('#v-jitter'),  loss: $('#v-loss'),  down: $('#v-down'),  up: $('#v-up') };
+const bars  = { ping: $('#b-ping'),  jitter: $('#b-jitter'),  loss: $('#b-loss'),  down: $('#b-down'),  up: $('#b-up') };
+
+let testRunning = false;
+
+function setMetric(key, value, unit, pct) {
+  vals[key].innerHTML = value === null ? '—' : (value + (unit ? '<small>' + unit + '</small>' : ''));
+  bars[key].style.width = Math.max(0, Math.min(100, pct || 0)) + '%';
+}
+function setPhase(text) { $('#phaseText').textContent = text; }
+function measuring(key, on) { tiles[key].classList.toggle('measuring', on); }
+
+function setMode(live) {
+  const chip = $('#modeChip');
+  chip.classList.toggle('live', live);
+  chip.classList.toggle('demo', !live);
+  $('#modeText').textContent = live ? 'Живой режим · Edge Cloudflare' : 'Демо-режим · симуляция';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function fetchTimeout(url, opts, ms) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  return fetch(url, Object.assign({}, opts, { signal: ctrl.signal })).finally(() => clearTimeout(t));
+}
+
+function median(a) {
+  const s = a.slice().sort((x, y) => x - y);
+  const m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+async function probeOnce() {
+  const t0 = performance.now();
+  const res = await fetchTimeout(CF_DOWN + '0&r=' + Math.random(), { cache: 'no-store' }, 5000);
+  await res.arrayBuffer();
+  return performance.now() - t0;
+}
+
+async function measureDownload(onTick) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 9000);
+  let last = 0;
+  try {
+    const res = await fetch(CF_DOWN + '26000000&r=' + Date.now(), { cache: 'no-store', signal: ctrl.signal });
+    const reader = res.body.getReader();
+    let bytes = 0;
+    const t0 = performance.now();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      bytes += value.byteLength;
+      const el = performance.now() - t0;
+      last = bytes * 8 / el / 1000;               /* Мбит/с */
+      onTick(last);
+      if (el > 7500) { ctrl.abort(); break; }
+    }
+    const el = performance.now() - t0;
+    return bytes > 0 ? bytes * 8 / el / 1000 : last;
+  } catch (e) {
+    if (e && e.name === 'AbortError') return last > 0 ? last : 0;
+    throw e;
+  } finally { clearTimeout(t); }
+}
+
+async function measureUpload() {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 9000);
+  try {
+    const chunk = new Uint8Array(1024 * 1024);   /* 1 МиБ нулей на чанк */
+    const blob = new Blob([chunk, chunk, chunk, chunk], { type: 'application/octet-stream' });
+    const t0 = performance.now();
+    await fetch(CF_UP, { method: 'POST', body: blob, signal: ctrl.signal, cache: 'no-store' });
+    return blob.size * 8 / (performance.now() - t0) / 1000;
+  } finally { clearTimeout(t); }
+}
+
+function buildRecommendations(r) {
+  const list = [];
+  const add = (ok, text) => list.push({ ok, text });
+  if (r.ping < 30)       add(true,  'Пинг ' + r.ping + ' мс — отлично для соревновательной игры.');
+  else if (r.ping < 60)  add(true,  'Пинг ' + r.ping + ' мс — хорошо для большинства игр; кабель вместо Wi-Fi сэкономит ещё несколько мс.');
+  else if (r.ping < 100) add(false, 'Пинг ' + r.ping + ' мс высоковат — попробуйте провод, закройте фоновые загрузки или выберите более близкий регион сервера.');
+  else                   add(false, 'Высокий пинг (' + r.ping + ' мс): проверьте фоновый трафик, цепочку Wi-Fi и маршрутизацию провайдера. Софт не исправит далёкий маршрут.');
+  if (r.jitter < 4)      add(true,  'Джиттер ' + r.jitter + ' мс — маршрут стабильный.');
+  else                   add(false, 'Джиттер ' + r.jitter + ' мс заметный — нестабильный маршрут или помехи Wi-Fi. Кабель надёжнее 2.4 ГГц Wi-Fi.');
+  if (r.loss === 0)      add(true,  'Потери пакетов не обнаружены.');
+  else                   add(false, 'Потери пакетов ' + r.loss + '% — именно они вызывают «резину». Перезагрузите роутер или обратитесь к провайдеру, если не проходит.');
+  add(true, 'Скорость: ' + Math.round(r.down) + ' Мбит/с вниз / ' + Math.round(r.up) + ' Мбит/с вверх — с запасом для любой онлайн-игры.');
+  return list;
+}
+
+function gradeOf(r) {
+  if (r.ping < 25 && r.jitter < 3 && r.loss === 0) return ['A+', 'Отличное соединение', 'Подходит для любой соревновательной игры.'];
+  if (r.ping < 40 && r.jitter < 6 && r.loss < 1)   return ['A',  'Хорошее соединение', 'Комфортно для рейтинговых матчей.'];
+  if (r.ping < 70 && r.loss < 2)                   return ['B',  'Нормальное соединение', 'Играбельно, но есть что оптимизировать.'];
+  if (r.ping < 110)                                return ['C',  'Среднее соединение', 'Для казуальной игры сойдёт; оптимизация поможет.'];
+  return ['D', 'Проблемное соединение', 'Высокая задержка или нестабильность — смотрите рекомендации ниже.'];
+}
+
+function showResults(r, live) {
+  const [g, title, sub] = gradeOf(r);
+  $('#grade').textContent = g;
+  $('#gradeTitle').textContent = title;
+  $('#gradeSub').textContent = sub + (live ? '' : ' (демо-значения)');
+  const box = $('#recList');
+  box.innerHTML = '';
+  buildRecommendations(r).forEach(rec => {
+    const div = document.createElement('div');
+    div.className = 'rec ' + (rec.ok ? 'ok' : 'warn');
+    div.innerHTML = '<svg class="ri" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">'
+      + (rec.ok ? '<path d="M4 12l5 5L20 6"/>' : '<path d="M12 6v7M12 17.5v.5"/><circle cx="12" cy="12" r="9.2"/>')
+      + '</svg><span>' + rec.text + '</span>';
+    box.appendChild(div);
+  });
+  $('#results').classList.add('on');
+}
+
+function resetTest() {
+  $('#results').classList.remove('on');
+  ['ping', 'jitter', 'loss', 'down', 'up'].forEach(k => setMetric(k, null, '', 0));
+}
+
+async function demoRun() {
+  setMode(false);
+  $('#testFoot').textContent = 'Живой замер сейчас недоступен (нет сети, либо запросы к speed-эндпоинтам заблокированы). Показываем честно помеченную симуляцию вместо фальшивых «живых» чисел.';
+  const demo = {
+    ping: 18 + Math.round(Math.random() * 14),
+    jitter: +(1 + Math.random() * 4).toFixed(1),
+    loss: Math.random() < 0.7 ? 0 : 0.3,
+    down: Math.round(60 + Math.random() * 90),
+    up: Math.round(20 + Math.random() * 40)
+  };
+  const phases = [
+    ['ping',   'Симуляция замера пинга…',      () => setMetric('ping', demo.ping, 'мс', 100 - demo.ping)],
+    ['jitter', 'Симуляция анализа джиттера…',  () => setMetric('jitter', demo.jitter, 'мс', 100 - demo.jitter * 8)],
+    ['loss',   'Симуляция проверки потерь…',   () => setMetric('loss', demo.loss, '%', 100 - demo.loss * 40)],
+    ['down',   'Симуляция замера загрузки…',   () => setMetric('down', demo.down, 'Мбит/с', demo.down / 2)],
+    ['up',     'Симуляция замера отдачи…',     () => setMetric('up', demo.up, 'Мбит/с', demo.up * 1.6)]
+  ];
+  for (const [key, phText, fn] of phases) {
+    measuring(key, true);
+    $('#testState').textContent = phText;
+    setPhase(phText);
+    for (let i = 0; i < 6; i++) {
+      const grow = 0.4 + 0.6 * (i / 5);
+      setMetric(key, null, '', 0);
+      await sleep(90);
+      fn();
+      await sleep(60);
+      if (key === 'ping') setMetric('ping', Math.round(demo.ping * grow + 8), 'мс', 100 - demo.ping);
+    }
+    fn();
+    measuring(key, false);
+    await sleep(160);
+  }
+  $('#testState').textContent = 'Демо завершено — показаны смоделированные результаты.';
+  setPhase('');
+  $('#ring').classList.remove('on');
+  showResults(demo, false);
+  toast('Демо-режим: сеть недоступна, значения смоделированы.');
+}
+
+async function runTest() {
+  if (testRunning) return;
+  testRunning = true;
+  const btn = $('#startBtn');
+  btn.disabled = true;
+  $('#startBtnText').textContent = 'Измерение…';
+  $('#ring').classList.add('on');
+  resetTest();
+  $('#modeChip').classList.add('live');
+  $('#modeText').textContent = 'Живой режим · Edge Cloudflare';
+  $('#testFoot').textContent = 'Замер по HTTPS из вашего браузера к публичным speed-эндпоинтам Cloudflare. Задержка через браузер немного выше игрового ICMP-пинга — считайте эти числа близкой оценкой.';
+
+  try {
+    if (!navigator.onLine) throw new Error('offline');
+
+    /* пинг */
+    measuring('ping', true);
+    $('#testState').textContent = 'Разогрев соединения…';
+    setPhase('Разогрев…');
+    await probeOnce();                                    /* разогрев: DNS + TLS */
+    $('#testState').textContent = 'Измеряю пинг…';
+    setPhase('Измеряю пинг…');
+    const samples = [];
+    let fails = 0;
+    for (let i = 0; i < 8; i++) {
+      try {
+        samples.push(await probeOnce());
+        setMetric('ping', Math.round(median(samples)), 'мс', Math.max(4, 100 - median(samples)));
+      } catch (e) { fails++; }
+      await sleep(120);
+    }
+    measuring('ping', false);
+    if (!samples.length) throw new Error('no samples');
+    const ping = Math.round(median(samples));
+    let jitter = 0;
+    for (let i = 1; i < samples.length; i++) jitter += Math.abs(samples[i] - samples[i - 1]);
+    jitter = +(jitter / (samples.length - 1)).toFixed(1);
+    const loss = +(fails / (fails + samples.length) * 100).toFixed(1);
+    setMetric('ping', ping, 'мс', Math.max(4, 100 - ping));
+    setMetric('jitter', jitter, 'мс', Math.max(4, 100 - jitter * 8));
+    setMetric('loss', loss, '%', Math.max(4, 100 - loss * 40));
+
+    measuring('jitter', false); measuring('loss', false);
+
+    /* загрузка */
+    measuring('down', true);
+    $('#testState').textContent = 'Проверяю скорость загрузки…';
+    setPhase('Проверяю загрузку…');
+    let down = 0;
+    try { down = await measureDownload(v => setMetric('down', Math.round(v), 'Мбит/с', v / 2)); }
+    catch (e) { down = 0; }
+    measuring('down', false);
+    down = Math.round(down);
+    setMetric('down', down, 'Мбит/с', down / 2);
+
+    /* отдача */
+    measuring('up', true);
+    $('#testState').textContent = 'Проверяю скорость отдачи…';
+    setPhase('Проверяю отдачу…');
+    let up = 0;
+    try { up = await measureUpload(); }
+    catch (e) { up = 0; }
+    measuring('up', false);
+    up = Math.round(up);
+    setMetric('up', up, 'Мбит/с', up * 1.6);
+
+    if (!down && !up) throw new Error('bandwidth failed');
+
+    $('#testState').textContent = 'Готово — результаты ниже.';
+    setPhase('');
+    $('#ring').classList.remove('on');
+    setMode(true);
+    showResults({ ping, jitter, loss, down, up }, true);
+  } catch (e) {
+    $('#ring').classList.remove('on');
+    await demoRun();
+  } finally {
+    btn.disabled = false;
+    $('#startBtnText').textContent = 'Ещё раз';
+    testRunning = false;
+  }
+}
+
+$('#startBtn').addEventListener('click', runTest);
+$$('[data-start-test]').forEach(b => b.addEventListener('click', e => {
+  e.preventDefault();
+  $('#pingtest').scrollIntoView({ behavior: REDUCED ? 'auto' : 'smooth' });
+  setTimeout(runTest, REDUCED ? 0 : 600);
+}));
+
+/* ---------------- До / После ---------------- */
+(function beforeAfter() {
+  const cv = $('#baChart');
+  const ctx = cv.getContext('2d');
+  let optimized = false, anim = 0, raf = null;
+
+  const beforeData = [82, 85, 79, 88, 92, 84, 90, 86, 95, 83, 89, 91, 87, 92, 85, 88, 90, 86, 94, 84];
+  const afterData  = [30, 28, 31, 27, 29, 32, 28, 30, 27, 29, 31, 28, 30, 29, 32, 28, 30, 29, 31, 28];
+
+  function tween(to) {
+    cancelAnimationFrame(raf);
+    const from = anim;
+    const t0 = performance.now();
+    (function step(t) {
+      const k = Math.min(1, (t - t0) / 700);
+      anim = from + (to - from) * (1 - Math.pow(1 - k, 3));
+      draw();
+      if (k < 1) raf = requestAnimationFrame(step);
+    })(t0);
+    /* Страховка: если rAF заморожен окружением, всё равно приходим к конечному состоянию */
+    setTimeout(() => { if (anim !== to) { anim = to; draw(); } }, 780);
+  }
+
+  function draw() {
+    const w = cv.width, h = cv.height, pad = 44, N = beforeData.length;
+    const maxV = 110;
+    const bw = (w - pad * 2) / N;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = 'rgba(255,255,255,.055)';
+    for (let g = 0; g <= 4; g++) {
+      const y = pad + g * (h - pad * 2) / 4;
+      ctx.beginPath(); ctx.moveTo(pad, y); ctx.lineTo(w - pad, y); ctx.stroke();
+    }
+    beforeData.forEach((v, i) => {
+      const x = pad + i * bw;
+      /* столбец «до»: всегда полной высоты, тускнеет в режиме «после» */
+      const hb = (v / maxV) * (h - pad * 2);
+      ctx.fillStyle = 'rgba(255,107,107,' + (0.34 - anim * 0.24).toFixed(3) + ')';
+      ctx.beginPath();
+      ctx.roundRect(x + bw * 0.12, h - pad - hb, bw * 0.34, hb, 6);
+      ctx.fill();
+      /* столбец «после»: всегда полной высоты, загорается в режиме «после» */
+      const ha = (afterData[i] / maxV) * (h - pad * 2);
+      const ga = 0.24 + anim * 0.64;
+      const g2 = ctx.createLinearGradient(0, h - pad - ha, 0, h - pad);
+      g2.addColorStop(0, 'rgba(61,220,151,' + ga.toFixed(3) + ')');
+      g2.addColorStop(1, 'rgba(61,220,151,' + (ga * 0.45).toFixed(3) + ')');
+      ctx.fillStyle = g2;
+      ctx.beginPath();
+      ctx.roundRect(x + bw * 0.54, h - pad - ha, bw * 0.34, ha, 6);
+      ctx.fill();
+    });
+    ctx.fillStyle = 'rgba(152,160,184,.8)';
+    ctx.font = '22px Inter, sans-serif';
+    ctx.fillText('мс', pad - 12, pad - 12);
+  }
+
+  const sw = $('#baSwitch');
+  function toggle() {
+    optimized = !optimized;
+    sw.classList.toggle('on', optimized);
+    sw.setAttribute('aria-checked', optimized);
+    tween(optimized ? 1 : 0);
+    $('#baLabel').style.color = optimized ? 'var(--green)' : 'var(--text)';
+  }
+  sw.addEventListener('click', toggle);
+  sw.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+
+  draw();
+})();
+
+/* ---------------- FAQ-аккордеон ---------------- */
+$$('.qa').forEach(qa => {
+  const btn = $('button', qa), a = $('.a', qa);
+  btn.addEventListener('click', () => {
+    const open = qa.classList.toggle('open');
+    btn.setAttribute('aria-expanded', open);
+    a.style.maxHeight = open ? a.scrollHeight + 'px' : '0px';
+  });
+});
+
+/* ---------------- Форма контактов (mailto, без сервера) ---------------- */
+$('#contactEmailLabel').textContent = CONTACT_EMAIL;
+$('#contactForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('#in-name').value.trim();
+  const email = $('#in-email').value.trim();
+  const msg = $('#in-msg').value.trim();
+  let ok = true;
+  $('#f-name').classList.toggle('invalid', !name); ok = ok && !!name;
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  $('#f-email').classList.toggle('invalid', !emailOk); ok = ok && emailOk;
+  $('#f-msg').classList.toggle('invalid', !msg); ok = ok && !!msg;
+  if (!ok) return;
+  const subject = encodeURIComponent('Ping-Optimizer — сообщение от ' + name);
+  const body = encodeURIComponent(msg + '\n\n— ' + name + ' (' + email + ')');
+  location.href = 'mailto:' + CONTACT_EMAIL + '?subject=' + subject + '&body=' + body;
+  toast('Открываю почтовое приложение…');
+  e.target.reset();
+});
+
+/* ---------------- Прочее ---------------- */
+$('#year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
