@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ping-Optimizer — снизь задержку. Играй плавнее.</title>
-<meta name="description" content="Ping-Optimizer: измерьте реальный пинг, джиттер и потери пакетов прямо в браузере и настройте сеть для меньшей задержки в играх.">
+<title>Ping-Optimizer — Reduce Ping in Games | Free Ping Test & Network Optimization</title>
+<meta name="description" content="Ping-Optimizer is a free network optimization tool for gamers: run a browser ping test and latency test, check packet loss and jitter, and reduce ping in CS2, Valorant, Fortnite, Apex Legends, Minecraft and PUBG. No install needed.">
 <meta name="theme-color" content="#05060a">
-<meta property="og:title" content="Ping-Optimizer">
-<meta property="og:description" content="Оптимизируй соединение. Снижай задержку. Играй плавнее.">
+<link rel="canonical" href="https://ping-optimizer.github.io/">
+<meta property="og:title" content="Ping-Optimizer — Free Ping Test & Network Optimization">
+<meta property="og:description" content="Run a latency test in your browser, check packet loss and jitter, and reduce ping in your favorite games. Free, honest, no install.">
+<meta property="og:url" content="https://ping-optimizer.github.io/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%234f7cff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='%230a0c14'/%3E%3Cpath d='M5 20 L11 20 L14 10 L18 24 L21 16 L23 20 L27 20' stroke='url(%23g)' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -129,7 +131,8 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em}
 .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;width:100%}
 .hero h1{font-size:clamp(40px,6.2vw,76px);font-weight:800;line-height:1.02;margin:18px 0 20px}
 .hero h1 .grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.hero-sub{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:480px;margin-bottom:34px}
+.hero-sub{font-size:clamp(16px,2vw,19px);color:var(--muted);max-width:520px;margin-bottom:12px}
+.hero-sub-ru{font-size:14.5px;color:var(--muted-2);max-width:540px;margin-bottom:34px}
 .hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
 .download-note{font-size:12.5px;color:var(--muted-2);margin-bottom:34px;letter-spacing:.02em}
 .hero-meta{display:flex;gap:26px;flex-wrap:wrap}
@@ -149,6 +152,9 @@ h1,h2,h3{font-family:var(--font-display);letter-spacing:-.02em}
 .mstat b{display:block;font-family:var(--font-display);font-size:17px}
 .mstat span{font-size:11px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.08em}
 .monitor-note{margin-top:12px;font-size:11.5px;color:var(--muted-2)}
+
+.about-text p{color:var(--muted);font-size:15.5px;max-width:840px;margin-bottom:14px}
+.about-text b{color:var(--text)}
 
 /* ============ Features ============ */
 .features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
@@ -385,9 +391,10 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
 <section class="hero">
   <div class="container hero-grid">
     <div>
-      <span class="chip reveal visible"><span class="dot"></span> Веб-пинг-тест уже работает — без установки</span>
+      <span class="chip reveal visible"><span class="dot"></span> Бесплатный ping test — прямо в браузере</span>
       <h1 class="reveal visible d1">PING-<span class="grad">OPTIMIZER</span></h1>
-      <p class="hero-sub reveal visible d2">Оптимизируй соединение. Снижай задержку. Играй плавнее.</p>
+      <p class="hero-sub reveal visible d2">Optimize your connection. Reduce ping. Play smoother.</p>
+      <p class="hero-sub-ru reveal visible d2">Ping-Optimizer — пинг-тест и оптимизация сети для онлайн-игр: задержка, джиттер, потери пакетов и скорость канала прямо в браузере.</p>
       <div class="hero-cta reveal visible d3">
         <a class="btn btn-primary" href="https://github.com/Ping-Optimizer/Ping-Optimizer.github.io/releases/download/v1/Ping-Optimizer.exe" download>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg>
@@ -421,13 +428,28 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
   </div>
 </section>
 
+<!-- ============ ABOUT ============ -->
+<section id="about">
+  <div class="container">
+    <div class="section-head reveal">
+      <span class="eyebrow">About</span>
+      <h2>What is Ping-Optimizer?</h2>
+    </div>
+    <div class="about-text reveal">
+      <p><b>Ping-Optimizer</b> is a free network optimization utility for online gamers. Run a ping test right in your browser to see your real latency, jitter and packet loss — no install, no account. The Windows desktop app goes further: it reviews common software-side sources of lag and helps you tune your system, so you can reduce ping and keep your connection stable where it matters most — in game.</p>
+      <p>Every latency test on this page measures your connection over HTTPS to Cloudflare's edge — a close, honest estimate of what you will actually see in-game. No fake numbers, no "ping boosters", no magic: just accurate measurements and practical recommendations that help you lower your ping where software genuinely can.</p>
+      <p>Коротко на русском: Ping-Optimizer — это пинг-тест и оптимизация сети без обещаний невозможного. Мы честно замеряем задержку, показываем, где теряются пакеты, и подсказываем, какие настройки действительно влияют на то, чтобы снизить пинг.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ============ FEATURES ============ -->
 <section id="features">
   <div class="container">
     <div class="section-head reveal">
-      <span class="eyebrow">Возможности</span>
-      <h2>Создан для стабильного соединения</h2>
-      <p>Всё, на чём сосредоточен Ping-Optimizer: от чистой задержки до стабильности маршрута — с честными замерами прямо в браузере.</p>
+      <span class="eyebrow">Network Optimization</span>
+      <h2>Оптимизация сети, созданная для геймеров</h2>
+      <p>Latency test, анализ джиттера, обнаружение потерь пакетов и выбор сервера — всё, на чём сосредоточен Ping-Optimizer, с честными замерами прямо в браузере.</p>
     </div>
     <div class="features-grid">
       <div class="feature glass reveal">
@@ -468,9 +490,9 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
 <section id="pingtest">
   <div class="container">
     <div class="section-head reveal" style="margin-left:auto;margin-right:auto;text-align:center">
-      <span class="eyebrow" style="justify-content:center">Пинг-тест</span>
-      <h2>Измерьте своё соединение прямо сейчас</h2>
-      <p>Настоящий тест, который выполняется полностью в вашем браузере: задержка, джиттер, потери и скорость. Без регистрации и установки.</p>
+      <span class="eyebrow" style="justify-content:center">Ping Test · Latency Test</span>
+      <h2>Пинг-тест вашего соединения — прямо сейчас</h2>
+      <p>Настоящий latency test, который выполняется полностью в вашем браузере: задержка, джиттер, потери пакетов и скорость канала. Без регистрации и установки.</p>
     </div>
     <div class="test-panel glass reveal">
       <div class="test-top">
@@ -533,9 +555,9 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
 <section id="how">
   <div class="container">
     <div class="section-head reveal">
-      <span class="eyebrow">Как это работает</span>
-      <h2>Три шага к чистому маршруту</h2>
-      <p>Без магии и фальшивых обещаний: понять своё соединение, убрать лишнее, продолжать наблюдать.</p>
+      <span class="eyebrow">How It Works</span>
+      <h2>Три шага, чтобы снизить пинг</h2>
+      <p>Без магии и фальшивых обещаний: понять своё соединение, убрать программные тормоза и следить за задержкой — именно так работает честная оптимизация пинга.</p>
     </div>
     <div class="steps">
       <div class="step glass reveal">
@@ -561,8 +583,8 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
 <section id="beforeafter">
   <div class="container">
     <div class="section-head reveal">
-      <span class="eyebrow">До / После</span>
-      <h2>Как выглядит оптимизация</h2>
+      <span class="eyebrow">Before / After</span>
+      <h2>Как выглядит оптимизация сети</h2>
       <p>Переключите тумблер, чтобы сравнить типичное неоптимизированное соединение с тем же маршрутом после чистки.</p>
     </div>
     <div class="ba-panel glass reveal">
@@ -596,9 +618,9 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
 <section id="games">
   <div class="container">
     <div class="section-head reveal">
-      <span class="eyebrow">Игры</span>
+      <span class="eyebrow">Reduce Ping in Games</span>
       <h2>Заточен под ваши игры</h2>
-      <p>Задержка важна везде, но каждый жанр наказывает за своё. Ping-Optimizer следит за всеми слабыми местами.</p>
+      <p>Пинг важен в каждой игре, но каждый жанр наказывает за своё. Вот как Ping-Optimizer помогает снизить пинг и удерживать соединение стабильным там, где вы играете.</p>
     </div>
     <div class="games-grid">
       <div class="game glass reveal">
@@ -669,6 +691,14 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
       <div class="qa glass reveal d1">
         <button aria-expanded="false">Ping-Optimizer бесплатный?<span class="plus"></span></button>
         <div class="a"><p>Да. Веб-пинг-тест на этой странице полностью бесплатен и останется таким. Десктоп-приложение для Windows тоже бесплатное — кнопка «Скачать» отдаёт актуальную версию напрямую с GitHub Releases.</p></div>
+      </div>
+      <div class="qa glass reveal">
+        <button aria-expanded="false">Как правильно сделать ping test?<span class="plus"></span></button>
+        <div class="a"><p>Закройте загрузки и торренты, по возможности подключитесь кабелем и запустите latency test два-три раза подряд. Сравнивайте результаты до и после любых изменений настроек — так вы увидите, что реально помогает снизить пинг, а что нет.</p></div>
+      </div>
+      <div class="qa glass reveal d1">
+        <button aria-expanded="false">Что помогает снизить пинг (reduce ping)?<span class="plus"></span></button>
+        <div class="a"><p>Провод вместо Wi-Fi, ближайший регион игрового сервера, отсутствие фонового трафика и корректные настройки сетевого адаптера. Физическое расстояние и маршрутизация провайдера задают минимум — всё, что можно выжать из софта, Ping-Optimizer показывает по схеме: сначала ping test, потом оптимизация, потом контрольный замер.</p></div>
       </div>
       <div class="qa glass reveal d2">
         <button aria-expanded="false">Почему тест иногда показывает «Демо-режим»?<span class="plus"></span></button>
@@ -777,7 +807,7 @@ footer{border-top:1px solid var(--stroke);padding:56px 0 34px;margin-top:40px;ba
           </span>
           <span>Ping<b>-Optimizer</b></span>
         </a>
-        <p>Утилита для онлайн-игроков, сосредоточенная на задержке: честно измеряйте соединение, настраивайте то, что поддаётся настройке, следите за главным.</p>
+        <p>Бесплатный ping test и network optimization для онлайн-игроков: честный latency test в браузере и десктоп-приложение для Windows, чтобы снизить пинг и держать соединение стабильным.</p>
       </div>
       <div>
         <h4>Продукт</h4>
